@@ -35,7 +35,7 @@ public class Main {
 
 			try {
 				for (int j = 0; j < zone.length; j++) {
-					Path spaceHeatDemandSumFilePath = Paths.get(resultPath + "resultsSpaceSum_" + i + "_" + j + ".eso");					
+					Path spaceHeatDemandSumFilePath = Paths.get(resultPath + "resultsSpaceSum_" + i + "_" + j + ".eso");
 					Files.write(spaceHeatDemandSumFilePath,
 							generateSumOfResultFiles(generateResultFiles(inputFileName, zone[j])));
 				}
@@ -58,6 +58,7 @@ public class Main {
 		BufferedReader br = new BufferedReader(new FileReader(inputFileName));
 		System.out.println("Start to read input file");
 		int cnt0 = 0;
+		
 		while ((line = br.readLine()) != null) {
 			if (line.contains("Heating:EnergyTransfer") && line.contains(zone)) {
 				lineSplitted = line.split(",");
@@ -108,7 +109,7 @@ public class Main {
 			}
 			suma = Math.round(suma);
 			table.add(suma + "");
-//			System.out.println("Sum for line " + i + "equals: " + suma);
+			// System.out.println("Sum for line " + i + "equals: " + suma);
 			suma = 0;
 		}
 		System.out.println("Sum of result files generated");
