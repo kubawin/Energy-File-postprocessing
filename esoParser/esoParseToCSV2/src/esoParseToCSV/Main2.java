@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 public class Main2 {
 
 	public static final String[] zone = { "Z01", "Z02", "Z03", "Z04" };
-	public static String resultPath = "C:/Users/jwiniarski.MOSTWAR1/Desktop/Java/esoParseToCSV2/resources/";
+	public static final String resultPath = "C:/Users/jwiniarski.MOSTWAR1/Desktop/Java/esoParseToCSV2/resources/";
+	public static final String parameter = "Heating:EnergyTransfer";
 	public static final String[] esoFiles = {
 			"C:/Users/jwiniarski.MOSTWAR1/Desktop/Rennovates/WP 02 RTD SIMULATIONS/CYPEtherm Eplus Results/RNV_6_S1_bud1.tri_dat/Energyplus/Project_dem.res/Project_dem.eso",
 			"C:/Users/jwiniarski.MOSTWAR1/Desktop/Rennovates/WP 02 RTD SIMULATIONS/CYPEtherm Eplus Results/RNV_6_S1_bud2.tri_dat/Energyplus/Project_dem.res/Project_dem.eso",
@@ -29,21 +30,30 @@ public class Main2 {
 
 	public static void main(String[] args) {
 
-		for (int i = 0; i < esoFiles.length; i++) {
-			String inputFileName = esoFiles[i];
-			Path spaceHeatDemandSumFilePath = Paths.get(resultPath + "resultsSpaceSum_" + i + ".eso");
+		for (int i = 0; i < esoFiles.length; i++) { 													//Iterate through all files
+			String inputFileName = esoFiles[i];															//String with path of current inputfile
+			Path spaceHeatDemandSumFilePath = Paths.get(resultPath + "resultsSpaceSum_" + i + ".eso");	//
+			
 			try {
-				for (int j = 0; j <= zone.length; j++) {
+				for (int j = 0; j <= zone.length; j++) {												// For every input file, iterate also all zones
 					Files.write(spaceHeatDemandSumFilePath,
 							generateSumOfResultFiles(generateResultFiles(inputFileName, zone[j])));
 				}
 			} catch (IOException e) {
-				System.out.println("Nie uda³o siê zapisac pliku.");
+				System.out.println("Can't write a file.");
 				e.printStackTrace();
 			}
 		}
 	}
-
+/**
+ * Method takes 
+ * @param inputFileName and
+ * @param zone
+ * and generates the List of Lists, structure that contains all data records wanted for all spaces respectively. At the end
+ * @return 
+ * @throws FileNotFoundException
+ * @throws IOException
+ */
 	private static List<List<String>> generateResultFiles(String inputFileName, String zone)
 			throws FileNotFoundException, IOException {
 
@@ -55,7 +65,7 @@ public class Main2 {
 //		List<String> resList = new LinkedList<>();
 
 		List<String> spaceList = Files.lines(Paths.get(esoFiles[0]))
-				.filter(fline -> fline.contains("Heating:EnergyTransfer")
+				.filter(fline -> fline.contains(parameter)
 						&& fline.contains(zone))
 				.collect(Collectors.toList()); 							// Find all names of spaces, for which program will gather data, not necessary to get results
 
@@ -69,12 +79,12 @@ public class Main2 {
 //		Files.write(Paths.get(resultPath + "resList"), resList);
 
 		for (String space : spaceList) {
-			System.out.println("Start to gathering data for space");
+			System.out.println("Start to gathering data for space");	//For each space name, search the text file and store occurrences in the List.
 
 			BufferedReader br = new BufferedReader(new FileReader(inputFileName));
 			System.out.println("Reading input file for space data collection");
 			while ((line = br.readLine()) != null) {
-				if (line.contains(space + ",") && !line.contains("Heating:EnergyTransfer")) {
+				if (line.contains(space + ",") && !line.contains(parameter)) {
 					// System.out.println("Found data for space");
 					inputDataRowWithZoneToken = line.split(",");
 					listOfDataForSpace.add(inputDataRowWithZoneToken[1]);
@@ -82,36 +92,43 @@ public class Main2 {
 			}
 			br.close();
 			System.out.println("Ended gathering data for space, size: " + listOfDataForSpace.size());
-			listTable.add(listOfDataForSpace);
-			listOfDataForSpace = null;
-			cnt++;
+			listTable.add(listOfDataForSpace);							// List with data for given space name is completed, so store it in List<List<String>>
+			listOfDataForSpace = null;									// Clear List with fata for given space name before loading the next space name. 
+			cnt++;					
 		}
 
 		System.out.println("Input file processing ended. Spaces searched: " + cnt);
 		System.out.println("Created list of data for list of spaces, size: " + listTable.size());
-		return listTable;
+		return listTable;		
 	}
 
+	/**
+	 * Method takes 
+	 * @param listTable
+	 * in order to generate sum for each inner List and returns
+	 * @return the List of sums.
+	 */
+	
 	private static List<String> generateSumOfResultFiles(List<List<String>> listTable) {
 
-		List<String> table = new LinkedList<>();
+		List<String> resultList = new ArrayList<>();			// Initialize the list which will be returned as a result
 		double sum = 0;
 
-		for (int i = 0; i < listTable.get(0).size(); i++) {
-			for (List<String> ss : listTable) {
+		for (int i = 0; i < listTable.get(0).size(); i++) {		// Iterate through List of Lists, the size of first list is the size of all
+			for (List<String> ss : listTable) {					// Collect and sum up elements of the same position (i) in the Lists.  
 				try {
 					sum += Double.parseDouble(ss.get(i) + "");
 				} catch (IndexOutOfBoundsException e) {
-					System.out.println("B³¹d przy linii nr " + i);
+					System.out.println("Error occured at line no " + i);
 				}
 			}
 			sum = Math.round(sum);
-			table.add(sum + "");
+			resultList.add(sum + "");						// Store the sum of all elements of the same position and store it in another, results list.
 			System.out.println("Sum for line " + i + "equals: " + sum);
 			sum = 0;
 		}
 		System.out.println("Sum of result files generated");
-		return table;
+		return resultList;
 	}
 
 }
